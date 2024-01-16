@@ -44,8 +44,10 @@ class Detect(nn.Module):
         shape = x[0].shape  # BCHW
         for i in range(self.nl):
             x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
-        if self.training:
+        if self.training or isinstance(x[0], torch.fx.Proxy):
             return x
+        # elif isinstance(x[0], torch.fx.Proxy):
+        #     return torch.cat([xi.view(1, self.no, -1) for xi in x], 2)
         elif self.dynamic or self.shape != shape:
             self.anchors, self.strides = (x.transpose(0, 1) for x in make_anchors(x, self.stride, 0.5))
             self.shape = shape
